@@ -57,6 +57,9 @@ namespace Telemetry_Auth_API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("SubscriptionLevel")
+                        .HasColumnType("integer");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -82,19 +85,22 @@ namespace Telemetry_Auth_API.Migrations
                     b.ToTable("Workspaces");
                 });
 
-            modelBuilder.Entity("UserWorkspace", b =>
+            modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceMember", b =>
                 {
-                    b.Property<Guid>("MembersId")
+                    b.Property<Guid>("WorkspaceId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("WorkspacesId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("MembersId", "WorkspacesId");
+                    b.Property<int>("UserRole")
+                        .HasColumnType("integer");
 
-                    b.HasIndex("WorkspacesId");
+                    b.HasKey("WorkspaceId", "UserId");
 
-                    b.ToTable("WorkspaceMembers", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("WorkspaceMember");
                 });
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.Instance", b =>
@@ -125,29 +131,37 @@ namespace Telemetry_Auth_API.Migrations
                     b.Navigation("Owner");
                 });
 
-            modelBuilder.Entity("UserWorkspace", b =>
+            modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceMember", b =>
                 {
-                    b.HasOne("Telemetry_Auth_API.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("MembersId")
+                    b.HasOne("Telemetry_Auth_API.Models.User", "User")
+                        .WithMany("WorkspaceMembership")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Telemetry_Auth_API.Models.Workspace", null)
-                        .WithMany()
-                        .HasForeignKey("WorkspacesId")
+                    b.HasOne("Telemetry_Auth_API.Models.Workspace", "Workspace")
+                        .WithMany("Members")
+                        .HasForeignKey("WorkspaceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.User", b =>
                 {
                     b.Navigation("Instances");
+
+                    b.Navigation("WorkspaceMembership");
                 });
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.Workspace", b =>
                 {
                     b.Navigation("Instances");
+
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }

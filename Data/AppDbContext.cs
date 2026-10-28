@@ -23,10 +23,18 @@ namespace Telemetry_Auth_API.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Workspace>()
-                .HasMany(w => w.Members)
-                .WithMany(u => u.Workspaces)
-                .UsingEntity(j => j.ToTable("WorkspaceMembers"));
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasKey(wm => new { wm.WorkspaceId, wm.UserId });
+
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasOne(wm => wm.Workspace)
+                .WithMany(w => w.Members)
+                .HasForeignKey(wm => wm.WorkspaceId);
+
+            modelBuilder.Entity<WorkspaceMember>()
+                .HasOne(wm => wm.User)
+                .WithMany(u => u.WorkspaceMembership)
+                .HasForeignKey(wm => wm.UserId);
 
             modelBuilder.Entity<Workspace>()
                 .HasOne(w => w.Owner)
