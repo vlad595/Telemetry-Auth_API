@@ -19,7 +19,7 @@ namespace Telemetry_Auth_API.Models
         public Guid Id {get;set;}
         public string UserName {get;set;} = string.Empty;
         public string Email {get;set;} = string.Empty;
-        public ICollection<Instance> UserInstances {get;set;} = new List<Instance>();
+        public ICollection<Instance> Instances {get;set;} = new List<Instance>();
         public ICollection<Workspace> Workspaces {get;set;} = new List<Workspace>();
         public string PasswordHash {get;set;} = string.Empty;
     }

@@ -14,11 +14,31 @@ namespace Telemetry_Auth_API.Data
         public AppDbContext(IConfiguration configuration)
         {
             _config = configuration;
-            Database.EnsureCreated();
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseNpgsql(_config["ConnectionString"]);
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Workspace>()
+                .HasMany(w => w.Members)
+                .WithMany(u => u.Workspaces)
+                .UsingEntity(j => j.ToTable("WorkspaceMembers"));
+
+            modelBuilder.Entity<Workspace>()
+                .HasOne(w => w.Owner)
+                .WithMany()
+                .HasForeignKey(w => w.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Instance>()
+                .HasOne(i => i.Owner)
+                .WithMany(u => u.Instances)
+                .HasForeignKey(i => i.OwnerId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
