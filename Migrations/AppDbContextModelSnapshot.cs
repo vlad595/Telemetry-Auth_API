@@ -78,6 +78,10 @@ namespace Telemetry_Auth_API.Migrations
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("WorkspaceName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OwnerId");
@@ -106,7 +110,7 @@ namespace Telemetry_Auth_API.Migrations
             modelBuilder.Entity("Telemetry_Auth_API.Models.Instance", b =>
                 {
                     b.HasOne("Telemetry_Auth_API.Models.User", "Owner")
-                        .WithMany("Instances")
+                        .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -152,8 +156,6 @@ namespace Telemetry_Auth_API.Migrations
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.User", b =>
                 {
-                    b.Navigation("Instances");
-
                     b.Navigation("WorkspaceMembership");
                 });
 

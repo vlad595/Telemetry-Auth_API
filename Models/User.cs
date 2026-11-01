@@ -20,7 +20,6 @@ namespace Telemetry_Auth_API.Models
         public string UserName {get;set;} = string.Empty;
         public string Email {get;set;} = string.Empty;
         public Subscription SubscriptionLevel {get;set;}
-        public ICollection<Instance> Instances {get;set;} = new List<Instance>();
         public ICollection<WorkspaceMember> WorkspaceMembership {get;set;} = new List<WorkspaceMember>();
         public string PasswordHash {get;set;} = string.Empty;
     }

@@ -47,7 +47,6 @@ namespace Telemetry_Auth_API.Services
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
                 WorkspaceMembership = new List<WorkspaceMember>(),
                 SubscriptionLevel = Subscription.Tier3,
-                Instances = new List<Instance>()
             };
 
             _context.Users.Add(newUser);

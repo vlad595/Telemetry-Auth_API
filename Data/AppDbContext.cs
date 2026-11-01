@@ -44,7 +44,7 @@ namespace Telemetry_Auth_API.Data
 
             modelBuilder.Entity<Instance>()
                 .HasOne(i => i.Owner)
-                .WithMany(u => u.Instances)
+                .WithMany()
                 .HasForeignKey(i => i.OwnerId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
