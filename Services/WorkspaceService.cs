@@ -13,6 +13,7 @@ namespace Telemetry_Auth_API.Services
         public Task<WorkspaceResponseDTO> RemoveWorkspace(Guid workspaceId, Guid userId);
     }
     public class WorkspaceService: IWorkspaceService
+    
     {
         private readonly AppDbContext _context;
         public WorkspaceService(AppDbContext context)

@@ -28,6 +28,10 @@ namespace Telemetry_Auth_API.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
@@ -89,6 +93,35 @@ namespace Telemetry_Auth_API.Migrations
                     b.ToTable("Workspaces");
                 });
 
+            modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceInvite", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("InviteCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkspaceId");
+
+                    b.ToTable("Invites");
+                });
+
             modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceMember", b =>
                 {
                     b.Property<Guid>("WorkspaceId")
@@ -116,7 +149,7 @@ namespace Telemetry_Auth_API.Migrations
                         .IsRequired();
 
                     b.HasOne("Telemetry_Auth_API.Models.Workspace", "Workspace")
-                        .WithMany("Instances")
+                        .WithMany()
                         .HasForeignKey("WorkspaceId");
 
                     b.Navigation("Owner");
@@ -133,6 +166,17 @@ namespace Telemetry_Auth_API.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceInvite", b =>
+                {
+                    b.HasOne("Telemetry_Auth_API.Models.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workspace");
                 });
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceMember", b =>
@@ -161,8 +205,6 @@ namespace Telemetry_Auth_API.Migrations
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.Workspace", b =>
                 {
-                    b.Navigation("Instances");
-
                     b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
