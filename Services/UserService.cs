@@ -61,6 +61,11 @@ namespace Telemetry_Auth_API.Services
                 throw new NotFoundException();
             }
 
+            if (!BCrypt.Net.BCrypt.Verify(user.Password, findedUser.PasswordHash))
+            {
+                throw new NotAllowedException("Password is incorrect");
+            }
+
             return new UserResponseDTO(findedUser);
         }
         public async Task<UserResponseDTO> UpgradePlan(Guid userId, Subscription tier)
