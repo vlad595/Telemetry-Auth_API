@@ -1,18 +1,22 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Telemetry_Auth_API.Data;
 using Telemetry_Auth_API.DTO;
 using Telemetry_Auth_API.Exceptions;
 using Telemetry_Auth_API.Models;
+using System.Text;
 
 namespace Telemetry_Auth_API.Services
 {
     public interface IUserService
     {
         public Task<UserResponseDTO> Me(Guid userId);
-        public Task<UserResponseDTO> Register(UserRegDTO user);
-        public Task<UserResponseDTO> LogIn(UserLogInDTO user);
+        public Task<UserAuthResponseDTO> Register(UserRegDTO user);
+        public Task<UserAuthResponseDTO> LogIn(UserLogInDTO user);
         public Task<UserResponseDTO> UpgradePlan(Guid userId, Subscription tier);
         public Task<UserResponseDTO> DowngradePlan(Guid userId, Subscription tier);
         public Task<UserResponseDTO> DeleteUser(Guid userId);
@@ -21,9 +25,11 @@ namespace Telemetry_Auth_API.Services
     public class UserService: IUserService
     {
         private readonly AppDbContext _context;
-        public UserService(AppDbContext context)
+        private readonly IConfiguration _config;
+        public UserService(AppDbContext context, IConfiguration config)
         {
             _context = context;
+            _config = config;
         }
         public async Task<UserResponseDTO> Me(Guid userId)
         {
@@ -37,7 +43,7 @@ namespace Telemetry_Auth_API.Services
             UserResponseDTO response = new UserResponseDTO(result);
             return response;
         }
-        public async Task<UserResponseDTO> Register(UserRegDTO user)
+        public async Task<UserAuthResponseDTO> Register(UserRegDTO user)
         {
             User newUser = new User
             {
@@ -50,9 +56,12 @@ namespace Telemetry_Auth_API.Services
 
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
-            return new UserResponseDTO(newUser);
+
+            string token = await GenerateJwtToken(newUser);
+
+            return new UserAuthResponseDTO(newUser, token);
         }
-        public async Task<UserResponseDTO> LogIn(UserLogInDTO user)
+        public async Task<UserAuthResponseDTO> LogIn(UserLogInDTO user)
         {
             var findedUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
 
@@ -66,7 +75,9 @@ namespace Telemetry_Auth_API.Services
                 throw new NotAllowedException("Password is incorrect");
             }
 
-            return new UserResponseDTO(findedUser);
+            string token = await GenerateJwtToken(findedUser);
+
+            return new UserAuthResponseDTO(findedUser, token);
         }
         public async Task<UserResponseDTO> UpgradePlan(Guid userId, Subscription tier)
         {
@@ -114,6 +125,23 @@ namespace Telemetry_Auth_API.Services
                 throw new NotFoundException();
             }
             return user;
+        }
+        private async Task<string> GenerateJwtToken(User user)
+        {
+            var authSection = _config.GetSection("Auth");
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.UserName)
+            };
+            var jwt = new JwtSecurityToken(
+                issuer: authSection["Issuer"],
+                audience: authSection["Audiecnce"],
+                claims: claims,
+                expires: DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authSection["Key"])), SecurityAlgorithms.HmacSha256)
+            );
+            return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
     }
 }
