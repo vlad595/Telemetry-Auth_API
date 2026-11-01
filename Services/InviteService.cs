@@ -26,7 +26,7 @@ namespace Telemetry_Auth_API.Services
                 Id = Guid.NewGuid(),
                 WorkspaceId = invite.WorkspaceId,
                 Role = invite.Role,
-                InviteCode = "",
+                InviteCode = Guid.NewGuid().ToString().Substring(0, 8).ToUpper(),
                 ExpiresAt = DateTime.Now.AddDays(3),
                 CreatedById = userId
             };

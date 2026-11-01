@@ -34,7 +34,7 @@ namespace Telemetry_Auth_API.Data
 
             modelBuilder.Entity<WorkspaceMember>()
                 .HasOne(wm => wm.User)
-                .WithMany(u => u.WorkspaceMembership)
+                .WithMany()
                 .HasForeignKey(wm => wm.UserId);
 
             modelBuilder.Entity<Workspace>()

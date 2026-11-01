@@ -182,7 +182,7 @@ namespace Telemetry_Auth_API.Migrations
             modelBuilder.Entity("Telemetry_Auth_API.Models.WorkspaceMember", b =>
                 {
                     b.HasOne("Telemetry_Auth_API.Models.User", "User")
-                        .WithMany("WorkspaceMembership")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -196,11 +196,6 @@ namespace Telemetry_Auth_API.Migrations
                     b.Navigation("User");
 
                     b.Navigation("Workspace");
-                });
-
-            modelBuilder.Entity("Telemetry_Auth_API.Models.User", b =>
-                {
-                    b.Navigation("WorkspaceMembership");
                 });
 
             modelBuilder.Entity("Telemetry_Auth_API.Models.Workspace", b =>
