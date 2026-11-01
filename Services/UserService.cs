@@ -72,7 +72,7 @@ namespace Telemetry_Auth_API.Services
         {
             var user = await FindUserById(userId);
 
-            if (user.SubscriptionLevel <= tier)
+            if (user.SubscriptionLevel >= tier)
             {
                 throw new NotAllowedException("You cannot downgrade subscription by upgrade method");
             }
@@ -99,6 +99,7 @@ namespace Telemetry_Auth_API.Services
             var user = await FindUserById(userId);
 
             _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
             return new UserResponseDTO(user);
         }
         public async Task<UserResponseDTO> RestrictUser(Guid userId)

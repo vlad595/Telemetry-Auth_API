@@ -73,6 +73,9 @@ namespace Telemetry_Auth_API.Services
                 UserRole = invite.Role,
                 UserId = userId
             });
+            
+            _context.Invites.Remove(invite);
+            
             await _context.SaveChangesAsync();
             return new WorkspaceResponseDTO(workspace);
         }

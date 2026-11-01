@@ -39,7 +39,7 @@ namespace Telemetry_Auth_API.Services
         public async Task<InviteResponseDto> RemoveInvite(Guid inviteId, Guid userId)
         {
             var invite = await _context.Invites.FirstOrDefaultAsync(i => i.Id == inviteId);
-            if (invite != null)
+            if (invite == null)
             {
                 throw new NotFoundException();
             }

@@ -4,9 +4,9 @@ namespace Telemetry_Auth_API.Models
 {
     public enum Subscription
     {
-        Tier1,
-        Tier2,
-        Tier3
+        Tier1 = 0,
+        Tier2 = 1,
+        Tier3 = 2
     }
     public enum WorkspaceRole
     {
