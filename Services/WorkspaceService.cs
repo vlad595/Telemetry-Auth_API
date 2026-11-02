@@ -58,7 +58,7 @@ namespace Telemetry_Auth_API.Services
             {
                 throw new NotFoundException("There is no invite by that code");
             }
-            else if (invite.ExpiresAt < DateTime.Now)
+            else if (invite.ExpiresAt < DateTime.UtcNow)
             {
                 throw new RequestTimeoutException("Time for accepting this invite is out");
             }
@@ -81,7 +81,7 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<List<WorkspaceResponseDTO>> GetMyWorkspaces(Guid userId)
         {
-            var workspaces = await _context.Workspaces.Where(w => w.Members.Any(m => m.UserId == userId) || w.OwnerId == userId).ToListAsync();
+            var workspaces = await _context.Workspaces.Where(w => w.Members.Any(m => m.UserId == userId) || w.OwnerId == userId).Include("Members").ToListAsync();
             if (workspaces == null)
             {
                 throw new NotFoundException();
