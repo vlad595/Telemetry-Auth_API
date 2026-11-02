@@ -97,6 +97,9 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotFoundException ex)
             {
                 return NotFound("User does not found");
+            }catch(NotAllowedException ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

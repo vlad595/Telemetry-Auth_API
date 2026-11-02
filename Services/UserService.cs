@@ -113,6 +113,10 @@ namespace Telemetry_Auth_API.Services
             {
                 throw new NotFoundException();
             }
+            if (user.Id != userId)
+            {
+                throw new NotAllowedException("You cannot delete someone`s account.");
+            }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
