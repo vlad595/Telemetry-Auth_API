@@ -29,6 +29,9 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotAllowedException ex)
             {
                 return BadRequest(ex.Message);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
         }
         [HttpDelete]

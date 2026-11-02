@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using Microsoft.EntityFrameworkCore;
 using Telemetry_Auth_API.Data;
 using Telemetry_Auth_API.DTO;
@@ -21,6 +22,17 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<InviteResponseDto> CreateInvite(InviteCreationDto invite, Guid userId)
         {
+            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == invite.WorkspaceId);
+            if (workspace == null)
+            {
+                throw new NotFoundException("Workspace does not found");
+            }
+            var user = workspace.Members.FirstOrDefault(u => u.UserId == userId && u.UserRole > WorkspaceRole.Reader);
+            if (user == null)
+            {
+                throw new NotFoundException("User does not found or you does not have permission.");
+            }
+
             WorkspaceInvite newInvite = new WorkspaceInvite
             {
                 Id = Guid.NewGuid(),
