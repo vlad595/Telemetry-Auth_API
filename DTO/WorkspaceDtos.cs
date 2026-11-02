@@ -5,7 +5,6 @@ namespace Telemetry_Auth_API.DTO
 {
     public class WorkspaceCreationDTO
     {
-        public Guid OwnerId {get;set;}
         public string WorkspaceName {get;set;} = string.Empty;
     }
     public class WorkspaceResponseDTO

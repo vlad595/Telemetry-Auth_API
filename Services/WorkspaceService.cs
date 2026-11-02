@@ -10,7 +10,7 @@ namespace Telemetry_Auth_API.Services
     public interface IWorkspaceService
     {
         public Task<List<WorkspaceResponseDTO>> GetMyWorkspaces(Guid userId);
-        public Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace);
+        public Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace, Guid userId);
         public Task<WorkspaceResponseDTO> RemoveWorkspace(Guid workspaceId, Guid userId);
         public Task<WorkspaceResponseDTO> AcceptWorkspaceInvite(string code, Guid userId);
     }
@@ -22,13 +22,13 @@ namespace Telemetry_Auth_API.Services
         {
             _context = context;
         }
-        public async Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace)
+        public async Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace, Guid userId)
         {
             Workspace newWorkspace = new Workspace
             {
                 Id = Guid.NewGuid(),
                 WorkspaceName = workspace.WorkspaceName,
-                OwnerId = workspace.OwnerId
+                OwnerId = userId
             };
 
             _context.Workspaces.Add(newWorkspace);
