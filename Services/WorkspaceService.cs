@@ -81,7 +81,7 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<List<WorkspaceResponseDTO>> GetMyWorkspaces(Guid userId)
         {
-            var workspaces = await _context.Workspaces.Where(w => w.Members.Any(m => m.UserId == userId)).ToListAsync();
+            var workspaces = await _context.Workspaces.Where(w => w.Members.Any(m => m.UserId == userId) || w.OwnerId == userId).ToListAsync();
             if (workspaces == null)
             {
                 throw new NotFoundException();

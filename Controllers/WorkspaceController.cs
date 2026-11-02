@@ -24,7 +24,7 @@ namespace Telemetry_Auth_API.Controllers
             try
             {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = _service.GetMyWorkspaces(Guid.Parse(userId));
+                var response = await _service.GetMyWorkspaces(Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
@@ -37,15 +37,14 @@ namespace Telemetry_Auth_API.Controllers
         [HttpPost("")]
         public async Task<ActionResult<WorkspaceResponseDTO>> PostWorkspace(WorkspaceCreationDTO workspace)
         {
-            try
-            {
+            try {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = _service.AddWorkspace(workspace, Guid.Parse(userId));
+                var response = await _service.AddWorkspace(workspace, Guid.Parse(userId));
                 return Ok(response);
-            }catch(NotFoundException ex)
+            } catch(NotFoundException ex)
             {
                 return NotFound("Workspace does not found");
-            }catch(NotAllowedException ex)
+            } catch(NotAllowedException ex)
             {
                 return BadRequest();
             }
@@ -56,7 +55,7 @@ namespace Telemetry_Auth_API.Controllers
             try
             {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = _service.RemoveWorkspace(Guid.Parse(workspaceId), Guid.Parse(userId));
+                var response = await _service.RemoveWorkspace(Guid.Parse(workspaceId), Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
@@ -72,7 +71,7 @@ namespace Telemetry_Auth_API.Controllers
             try
             {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var response = _service.AcceptWorkspaceInvite(code, Guid.Parse(userId));
+                var response = await _service.AcceptWorkspaceInvite(code, Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
