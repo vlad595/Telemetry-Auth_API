@@ -10,6 +10,7 @@ namespace Telemetry_Auth_API.Services
     public interface IInstanceService
     {
         public Task<InstanceResponseDto> AddInstance(InstanceCreationDto instance, Guid userId);
+        public Task<InstanceResponseDto> AddInstanceToWorkspace(WorkspaceInstanceCreationDto instance, Guid userId);
         public Task<InstanceResponseDto> RemoveInstance(Guid instanceId, Guid userId);
         public Task<List<InstanceResponseDto>> GetWorkspaceInstances(Guid workspaceId, Guid userId);
         public Task<List<InstanceResponseDto>> GetMyInstances(Guid userId);
@@ -28,6 +29,20 @@ namespace Telemetry_Auth_API.Services
                 Id = instance.Id,
                 OwnerId = userId,
                 Name = instance.Name
+            };
+
+            _context.Instances.Add(newInstance);
+            await _context.SaveChangesAsync();
+            return new InstanceResponseDto(newInstance);
+        }
+        public async Task<InstanceResponseDto> AddInstanceToWorkspace(WorkspaceInstanceCreationDto instance, Guid userId)
+        {
+            Instance newInstance = new Instance
+            {
+                Id = instance.Id,
+                OwnerId = userId,
+                Name = instance.Name,
+                WorkspaceId = instance.WorkspaceId
             };
 
             _context.Instances.Add(newInstance);
