@@ -79,6 +79,9 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotAllowedException ex)
             {
                 return BadRequest();
+            }catch(RequestTimeoutException ex)
+            {
+                return BadRequest(ex.Message);
             }
         }
     }

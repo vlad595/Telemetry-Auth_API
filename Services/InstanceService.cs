@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Frozen;
 using Microsoft.EntityFrameworkCore;
 using Telemetry_Auth_API.Data;
 using Telemetry_Auth_API.DTO;
@@ -37,6 +38,17 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<InstanceResponseDto> AddInstanceToWorkspace(WorkspaceInstanceCreationDto instance, Guid userId)
         {
+            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == instance.WorkspaceId);
+            if (workspace == null)
+            {
+                throw new NotFoundException("There is no workspace");
+            }
+            var user = workspace.Members.FirstOrDefault(u => u.UserId == userId);
+            if (workspace.OwnerId != userId && (user == null || user.UserRole >= WorkspaceRole.Reader))
+            {
+                throw new NotAllowedException("You are not allowed to add instances");
+            }
+
             Instance newInstance = new Instance
             {
                 Id = instance.Id,
@@ -69,11 +81,22 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<List<InstanceResponseDto>> GetWorkspaceInstances(Guid workspaceId, Guid userId)
         {
+            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == workspaceId);
+            if (workspace == null)
+            {
+                throw new NotFoundException("Workspace does not found");
+            }
+            var user = workspace.Members.FirstOrDefault(u => u.UserId == userId);
+            if (workspace.OwnerId != userId && (user == null || user.UserRole >= WorkspaceRole.Reader))
+            {
+                throw new NotAllowedException("You are not allowed to see other workspace instances");
+            }
+
             List<Instance> workspaceInstances = await _context.Instances.Where(i => i.WorkspaceId == workspaceId).ToListAsync();
 
             if (workspaceInstances == null)
             {
-                throw new NotFoundException();
+                throw new NotFoundException("There is no instances");
             }
 
             List<InstanceResponseDto> result = new();

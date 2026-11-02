@@ -17,7 +17,7 @@ namespace Telemetry_Auth_API.DTO
         public Guid CreatedById {get;set;}
         public InviteResponseDto(WorkspaceInvite invite)
         {
-            WorkspaceId = invite.Id;
+            WorkspaceId = invite.WorkspaceId;
             InviteCode = invite.InviteCode;
             Role = invite.Role;
             ExpiresAt = invite.ExpiresAt;

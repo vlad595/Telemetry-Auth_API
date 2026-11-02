@@ -92,7 +92,8 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                var response = await _service.DeleteUser(Guid.Parse(userId));
+                string tokenUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
+                var response = await _service.DeleteUser(Guid.Parse(userId), Guid.Parse(tokenUserId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {

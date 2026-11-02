@@ -27,7 +27,7 @@ namespace Telemetry_Auth_API.Services
             {
                 throw new NotFoundException("Workspace does not found");
             }
-            var user = workspace.Members.FirstOrDefault(u => u.UserId == userId && u.UserRole > WorkspaceRole.Reader);
+            var user = workspace.Members.FirstOrDefault(u => u.UserId == userId && u.UserRole < WorkspaceRole.Reader);
             if (user == null)
             {
                 throw new NotFoundException("User does not found or you does not have permission.");

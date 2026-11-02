@@ -19,7 +19,7 @@ namespace Telemetry_Auth_API.Services
         public Task<UserAuthResponseDTO> LogIn(UserLogInDTO user);
         public Task<UserResponseDTO> UpgradePlan(Guid userId, Subscription tier);
         public Task<UserResponseDTO> DowngradePlan(Guid userId, Subscription tier);
-        public Task<UserResponseDTO> DeleteUser(Guid userId);
+        public Task<UserResponseDTO> DeleteUser(Guid userId, Guid tokenUserId);
         public Task<UserResponseDTO> RestrictUser(Guid userId);
     }
     public class UserService: IUserService
@@ -105,7 +105,7 @@ namespace Telemetry_Auth_API.Services
             await _context.SaveChangesAsync();
             return new UserResponseDTO(user);
         }
-        public async Task<UserResponseDTO> DeleteUser(Guid userId)
+        public async Task<UserResponseDTO> DeleteUser(Guid userId, Guid tokenUserId)
         {
             var user = await FindUserById(userId);
 
@@ -113,7 +113,7 @@ namespace Telemetry_Auth_API.Services
             {
                 throw new NotFoundException();
             }
-            if (user.Id != userId)
+            if (user.Id != tokenUserId)
             {
                 throw new NotAllowedException("You cannot delete someone`s account.");
             }
