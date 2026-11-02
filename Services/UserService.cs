@@ -109,6 +109,11 @@ namespace Telemetry_Auth_API.Services
         {
             var user = await FindUserById(userId);
 
+            if (user == null)
+            {
+                throw new NotFoundException();
+            }
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return new UserResponseDTO(user);
@@ -129,17 +134,20 @@ namespace Telemetry_Auth_API.Services
         private async Task<string> GenerateJwtToken(User user)
         {
             var authSection = _config.GetSection("Auth");
+            var jwtKey = authSection["Key"]
+                ?? throw new InvalidOperationException("Missing configuration value: Auth:Key.");
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
             };
             var jwt = new JwtSecurityToken(
                 issuer: authSection["Issuer"],
-                audience: authSection["Audiecnce"],
+                audience: authSection["Audience"],
                 claims: claims,
                 expires: DateTime.UtcNow.Add(TimeSpan.FromHours(1)),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authSection["Key"])), SecurityAlgorithms.HmacSha256)
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), SecurityAlgorithms.HmacSha256)
             );
             return new JwtSecurityTokenHandler().WriteToken(jwt);
         }
