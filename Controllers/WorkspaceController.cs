@@ -23,30 +23,30 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.GetMyWorkspaces(Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("Workspaces does not found");
+                return NotFound($"Workspaces does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
         [HttpPost("")]
         public async Task<ActionResult<WorkspaceResponseDTO>> PostWorkspace(WorkspaceCreationDTO workspace)
         {
             try {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.AddWorkspace(workspace, Guid.Parse(userId));
                 return Ok(response);
             } catch(NotFoundException ex)
             {
-                return NotFound("Workspace does not found");
+                return NotFound($"Workspace does not found: {ex.Message}");
             } catch(NotAllowedException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
         [HttpDelete("remove={workspaceId}")]
@@ -54,15 +54,15 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.RemoveWorkspace(Guid.Parse(workspaceId), Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("Workspace does not found");
+                return NotFound($"Workspace does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }
         }
         [HttpPost("accept-invite={code}")]
@@ -70,15 +70,15 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.AcceptWorkspaceInvite(code, Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("Workspace does not found");
+                return NotFound($"Workspace does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
-                return BadRequest();
+                return BadRequest(ex.Message);
             }catch(RequestTimeoutException ex)
             {
                 return BadRequest(ex.Message);

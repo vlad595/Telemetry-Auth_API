@@ -23,7 +23,7 @@ namespace Telemetry_Auth_API.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<UserResponseDTO>> Me()
         {
-            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
             if (string.IsNullOrWhiteSpace(userId))
             {
                 return Unauthorized("Invalid token");
@@ -46,10 +46,10 @@ namespace Telemetry_Auth_API.Controllers
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound();
+                return NotFound(ex.Message);
             }catch(NotAllowedException ex)
             {
-                return BadRequest("Password is incorrect");
+                return BadRequest($"Password is incorrect: {ex.Message}");
             }
         }
         [HttpPatch("plan/downgrade={plan}")]
@@ -58,15 +58,15 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.DowngradePlan(Guid.Parse(userId), plan);
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("User does not found");
+                return NotFound($"User does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
-                return BadRequest("Something went wrong");
+                return BadRequest($"Something went wrong: {ex.Message}");
             }
         }
         [HttpPatch("plan/upgrade={plan}")]
@@ -75,15 +75,15 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.UpgradePlan(Guid.Parse(userId), plan);
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("User does not found");
+                return NotFound($"User does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
-                return BadRequest("Something went wrong");
+                return BadRequest($"Something went wrong: {ex.Message}");
             }
         }
         [HttpDelete("remove={userId}")]
@@ -97,7 +97,7 @@ namespace Telemetry_Auth_API.Controllers
                 return Ok(response);
             }catch(NotFoundException ex)
             {
-                return NotFound("User does not found");
+                return NotFound($"User does not found: {ex.Message}");
             }catch(NotAllowedException ex)
             {
                 return BadRequest(ex.Message);

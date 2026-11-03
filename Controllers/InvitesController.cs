@@ -23,7 +23,7 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.CreateInvite(invite, Guid.Parse(userId));
                 return Ok(response);
             }catch(NotAllowedException ex)
@@ -39,7 +39,7 @@ namespace Telemetry_Auth_API.Controllers
         {
             try
             {
-                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
                 var response = await _service.RemoveInvite(Guid.Parse(inviteId), Guid.Parse(userId));
                 return Ok(response);
             }catch(NotAllowedException ex)
@@ -47,7 +47,7 @@ namespace Telemetry_Auth_API.Controllers
                 return BadRequest(ex.Message);
             }catch(NotFoundException ex)
             {
-                return NotFound();
+                return NotFound(ex.Message);
             }
         }
     }
