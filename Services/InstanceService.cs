@@ -81,30 +81,28 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<List<InstanceResponseDto>> GetWorkspaceInstances(Guid workspaceId, Guid userId)
         {
-            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == workspaceId);
+            var workspace = await _context.Workspaces.Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == workspaceId);
+
             if (workspace == null)
             {
-                throw new NotFoundException("Workspace does not found");
+                throw new NotFoundException("Workspace not found");
             }
+
+            bool isOwner = workspace.OwnerId == userId;
             var user = workspace.Members.FirstOrDefault(u => u.UserId == userId);
-            if (workspace.OwnerId != userId && (user == null || user.UserRole >= WorkspaceRole.Reader))
+
+            if (!isOwner && user == null)
             {
                 throw new NotAllowedException("You are not allowed to see other workspace instances");
             }
 
-            List<Instance> workspaceInstances = await _context.Instances.Where(i => i.WorkspaceId == workspaceId).ToListAsync();
-
-            if (workspaceInstances == null)
+            var workspaceInstances = await _context.Instances.Where(i => i.WorkspaceId == workspaceId).ToListAsync();
+            if (!workspaceInstances.Any()) 
             {
-                throw new NotFoundException("There is no instances");
+                throw new NotFoundException("There are no instances");
             }
 
-            List<InstanceResponseDto> result = new();
-            foreach (Instance instance in workspaceInstances)
-            {
-                result.Add(new InstanceResponseDto(instance));
-            }
-            return result;
+            return workspaceInstances.Select(i => new InstanceResponseDto(i)).ToList();
         }
         public async Task<List<InstanceResponseDto>> GetMyInstances(Guid userId)
         {
