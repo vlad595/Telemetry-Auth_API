@@ -10,8 +10,10 @@ namespace Telemetry_Auth_API.Services
     public interface IWorkspaceService
     {
         public Task<List<WorkspaceResponseDTO>> GetMyWorkspaces(Guid userId);
+        public Task<WorkspaceResponseDTO> GetWorkspace(Guid workspaceId, Guid userId);
         public Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace, Guid userId);
         public Task<WorkspaceResponseDTO> RemoveWorkspace(Guid workspaceId, Guid userId);
+        public Task<WorkspaceResponseDTO> RemoveMember(Guid workspaceId, Guid memberId, Guid userId);
         public Task<WorkspaceResponseDTO> AcceptWorkspaceInvite(string code, Guid userId);
     }
     public class WorkspaceService: IWorkspaceService
@@ -21,6 +23,26 @@ namespace Telemetry_Auth_API.Services
         public WorkspaceService(AppDbContext context)
         {
             _context = context;
+        }
+        public async Task<WorkspaceResponseDTO> GetWorkspace(Guid workspaceId, Guid userId)
+        {
+            var workspace = await _context.Workspaces
+                .Include(w => w.Members)
+                    .ThenInclude(member => member.User)
+                .FirstOrDefaultAsync(w => w.Id == workspaceId);
+
+            if (workspace == null)
+            {
+                throw new NotFoundException();
+            }
+
+            List<WorkspaceMember> members = workspace.Members.ToList();
+
+            if (workspace.OwnerId != userId && !members.Any(m => m.UserId == userId))
+            {
+                throw new NotAllowedException("You are not the member of a workspace.");
+            }
+            return new WorkspaceResponseDTO(workspace);
         }
         public async Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace, Guid userId)
         {
@@ -51,6 +73,45 @@ namespace Telemetry_Auth_API.Services
             await _context.SaveChangesAsync();
             return new WorkspaceResponseDTO(workspace);
         }
+        public async Task<WorkspaceResponseDTO> RemoveMember(Guid workspaceId, Guid memberId, Guid userId)
+        {
+            var workspace = await _context.Workspaces
+                .Include(w => w.Members)
+                    .ThenInclude(member => member.User)
+                .FirstOrDefaultAsync(w => w.Id == workspaceId);
+
+            if (workspace == null)
+            {
+                throw new NotFoundException("Workspace not found");
+            }
+
+            bool isOwner = workspace.OwnerId == userId;
+            var user = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+
+            if (!isOwner && user == null)
+            {
+                throw new NotAllowedException("You are not a member of this workspace.");
+            }
+
+            var memberToRemove = workspace.Members.FirstOrDefault(m => m.UserId == memberId);
+
+            if (memberToRemove == null)
+            {
+                throw new NotFoundException("Member not found in this workspace");
+            }
+
+            if (!isOwner && user!.UserRole != WorkspaceRole.Admin && user!.UserRole != WorkspaceRole.Manager)
+            {
+                throw new NotAllowedException("You cannot remove members.");
+            }
+
+            workspace.Members.Remove(memberToRemove);
+
+            await _context.SaveChangesAsync();
+
+            return new WorkspaceResponseDTO(workspace);
+
+        }
         public async Task<WorkspaceResponseDTO> AcceptWorkspaceInvite(string code, Guid userId)
         {
             var invite = await _context.Invites.FirstOrDefaultAsync(i => i.InviteCode == code);
@@ -62,7 +123,10 @@ namespace Telemetry_Auth_API.Services
             {
                 throw new RequestTimeoutException("Time for accepting this invite is out");
             }
-            var workspace = await _context.Workspaces.FirstOrDefaultAsync(w => w.Id == invite.WorkspaceId);
+            var workspace = await _context.Workspaces
+                .Include(w => w.Members)
+                    .ThenInclude(member => member.User)
+                .FirstOrDefaultAsync(w => w.Id == invite.WorkspaceId);
             if (workspace == null)
             {
                 throw new NotFoundException("There is no workspace by this invite.");
@@ -71,7 +135,11 @@ namespace Telemetry_Auth_API.Services
             {
                 WorkspaceId = workspace.Id,
                 UserRole = invite.Role,
-                UserId = userId
+                UserId = userId,
+                UserName = await _context.Users
+                    .Where(user => user.Id == userId)
+                    .Select(user => user.UserName)
+                    .FirstOrDefaultAsync() ?? string.Empty
             });
             
             _context.Invites.Remove(invite);
@@ -81,7 +149,11 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<List<WorkspaceResponseDTO>> GetMyWorkspaces(Guid userId)
         {
-            var workspaces = await _context.Workspaces.Where(w => w.Members.Any(m => m.UserId == userId) || w.OwnerId == userId).Include("Members").ToListAsync();
+            var workspaces = await _context.Workspaces
+                .Where(w => w.Members.Any(m => m.UserId == userId) || w.OwnerId == userId)
+                .Include(w => w.Members)
+                    .ThenInclude(member => member.User)
+                .ToListAsync();
             if (workspaces == null)
             {
                 throw new NotFoundException();

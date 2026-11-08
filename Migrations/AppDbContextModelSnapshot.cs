@@ -133,6 +133,10 @@ namespace Telemetry_Auth_API.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("UserRole")
                         .HasColumnType("integer");
 

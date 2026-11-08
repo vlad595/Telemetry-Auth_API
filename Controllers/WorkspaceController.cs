@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Telemetry_Auth_API.DTO;
 using Telemetry_Auth_API.Exceptions;
+using Telemetry_Auth_API.Models;
 using Telemetry_Auth_API.Services;
 
 namespace Telemetry_Auth_API.Controllers
@@ -29,6 +30,22 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotFoundException ex)
             {
                 return NotFound($"Workspaces does not found: {ex.Message}");
+            }catch(NotAllowedException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        [HttpGet("workspace={workspaceId}")]
+        public async Task<ActionResult<WorkspaceResponseDTO>> GetWorkspace(string workspaceId)
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
+                var response = await _service.GetWorkspace(Guid.Parse(workspaceId), Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }catch(NotAllowedException ex)
             {
                 return BadRequest(ex.Message);
@@ -63,6 +80,22 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotAllowedException ex)
             {
                 return BadRequest(ex.Message);
+            }
+        }
+        [HttpDelete("memRemove={memberId}")]
+        public async Task<ActionResult<WorkspaceResponseDTO>> RemoveMember(string memberId, string workspaceId)
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
+                var response = await _service.RemoveMember(Guid.Parse(workspaceId), Guid.Parse(memberId), Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotAllowedException ex)
+            {
+                return BadRequest(ex.Message);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
         }
         [HttpPost("accept-invite={code}")]
