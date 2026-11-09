@@ -82,6 +82,22 @@ namespace Telemetry_Auth_API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPatch("memId={memberId}")]
+        public async Task<ActionResult<WorkspaceResponseDTO>> ChangeMemberRole(string memberId, string workspaceId, WorkspaceRole role)
+        {
+            try
+            {
+                string userID = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "No id";
+                var response = await _service.ChangeMemberRole(Guid.Parse(workspaceId), Guid.Parse(userID), Guid.Parse(memberId), role);
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }catch(NotAllowedException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpDelete("memRemove={memberId}")]
         public async Task<ActionResult<WorkspaceResponseDTO>> RemoveMember(string memberId, string workspaceId)
         {

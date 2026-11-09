@@ -13,6 +13,7 @@ namespace Telemetry_Auth_API.Services
         public Task<WorkspaceResponseDTO> GetWorkspace(Guid workspaceId, Guid userId);
         public Task<WorkspaceResponseDTO> AddWorkspace(WorkspaceCreationDTO workspace, Guid userId);
         public Task<WorkspaceResponseDTO> RemoveWorkspace(Guid workspaceId, Guid userId);
+        public Task<WorkspaceResponseDTO> ChangeMemberRole(Guid workspaceId, Guid userId, Guid memberId, WorkspaceRole role);
         public Task<WorkspaceResponseDTO> RemoveMember(Guid workspaceId, Guid memberId, Guid userId);
         public Task<WorkspaceResponseDTO> AcceptWorkspaceInvite(string code, Guid userId);
     }
@@ -70,6 +71,41 @@ namespace Telemetry_Auth_API.Services
             }
 
             _context.Workspaces.Remove(workspace);
+            await _context.SaveChangesAsync();
+            return new WorkspaceResponseDTO(workspace);
+        }
+        public async Task<WorkspaceResponseDTO> ChangeMemberRole(Guid workspaceId, Guid userId, Guid memberId, WorkspaceRole role)
+        {
+            var workspace = await _context.Workspaces.Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == workspaceId);
+            if (workspace == null)
+            {
+                throw new NotFoundException("Workspace not found.");
+            }
+
+            bool isOwner = workspace.OwnerId == userId;
+            var currentUser = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+
+            if (!isOwner && currentUser == null)
+            {
+                throw new NotAllowedException("You are not a member of this workspace.");
+            }
+
+            var memberToChange = workspace.Members.FirstOrDefault(m => m.UserId == memberId);
+            if (memberToChange == null)
+            {
+                throw new NotFoundException("Member not found in this workspace.");
+            }
+            if (memberToChange.UserId == workspace.OwnerId)
+            {
+                throw new NotAllowedException("Cannot change the role of the workspace owner.");
+            }
+
+            if (!isOwner && currentUser!.UserRole != WorkspaceRole.Admin)
+            {
+                throw new NotAllowedException("You are not allowed to change member roles.");
+            }
+            memberToChange.UserRole = role; 
+
             await _context.SaveChangesAsync();
             return new WorkspaceResponseDTO(workspace);
         }
