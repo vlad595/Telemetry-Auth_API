@@ -31,6 +31,19 @@ namespace Telemetry_Auth_API.Controllers
             var response = await _service.Me(Guid.Parse(userId));
             return Ok(response);
         }
+        [HttpGet("instance={agentId}")]
+        public async Task<ActionResult<UserResponseDTO>> GetUserByInstanceId(string agentId)
+        {
+            try
+            {
+                var response = await _service.GetPlanByAgentId(Guid.Parse(agentId));
+                return Ok(response);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
         [HttpPost("reg")]
         public async Task<ActionResult<UserAuthResponseDTO>> Register(UserRegDTO user)
         {

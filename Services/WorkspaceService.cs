@@ -76,7 +76,10 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<WorkspaceResponseDTO> ChangeMemberRole(Guid workspaceId, Guid userId, Guid memberId, WorkspaceRole role)
         {
-            var workspace = await _context.Workspaces.Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == workspaceId);
+            var workspace = await _context.Workspaces
+                .Include(w => w.Members)
+                    .ThenInclude(member => member.User)
+                .FirstOrDefaultAsync(w => w.Id == workspaceId);
             if (workspace == null)
             {
                 throw new NotFoundException("Workspace not found.");

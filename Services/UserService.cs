@@ -19,6 +19,7 @@ namespace Telemetry_Auth_API.Services
         public Task<UserAuthResponseDTO> LogIn(UserLogInDTO user);
         public Task<UserResponseDTO> UpgradePlan(Guid userId, Subscription tier);
         public Task<UserResponseDTO> DowngradePlan(Guid userId, Subscription tier);
+        public Task<UserResponseDTO> GetPlanByAgentId(Guid agentId);
         public Task<UserResponseDTO> DeleteUser(Guid userId, Guid tokenUserId);
         public Task<UserResponseDTO> RestrictUser(Guid userId);
     }
@@ -42,6 +43,20 @@ namespace Telemetry_Auth_API.Services
 
             UserResponseDTO response = new UserResponseDTO(result);
             return response;
+        }
+        public async Task<UserResponseDTO> GetPlanByAgentId(Guid agentId)
+        {
+            var instance = await _context.Instances.FirstOrDefaultAsync(i => i.Id == agentId);
+            if (instance == null)
+            {
+                throw new NotFoundException("Agent does not found");
+            }
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == instance.OwnerId);
+            if(user == null)
+            {
+                throw new NotFoundException("User does not found");
+            }
+            return new UserResponseDTO(user);
         }
         public async Task<UserAuthResponseDTO> Register(UserRegDTO user)
         {
