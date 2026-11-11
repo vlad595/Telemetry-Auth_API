@@ -64,6 +64,9 @@ namespace Telemetry_Auth_API.Migrations
                     b.Property<int>("SubscriptionLevel")
                         .HasColumnType("integer");
 
+                    b.Property<string>("TelegramChatId")
+                        .HasColumnType("text");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("text");

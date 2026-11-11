@@ -20,6 +20,7 @@ namespace Telemetry_Auth_API.DTO
         public Guid Id {get;set;}
         public string UserName {get;set;} = string.Empty;
         public string Email {get;set;} = string.Empty;
+        public string TelegramChatId {get;set;} = string.Empty;
         public Subscription SubscriptionLevel {get;set;}
         public UserResponseDTO(User user)
         {
@@ -27,6 +28,7 @@ namespace Telemetry_Auth_API.DTO
             UserName = user.UserName;
             Email = user.Email;
             SubscriptionLevel = user.SubscriptionLevel;
+            TelegramChatId = user.TelegramChatId ?? "null";
         }
     }
     public class UserAuthResponseDTO : UserResponseDTO

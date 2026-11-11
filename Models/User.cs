@@ -19,6 +19,7 @@ namespace Telemetry_Auth_API.Models
         public Guid Id {get;set;}
         public string UserName {get;set;} = string.Empty;
         public string Email {get;set;} = string.Empty;
+        public string? TelegramChatId {get;set;}
         public Subscription SubscriptionLevel {get;set;}
         public string PasswordHash {get;set;} = string.Empty;
     }

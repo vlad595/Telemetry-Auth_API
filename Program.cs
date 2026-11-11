@@ -51,6 +51,8 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddMemoryCache();
+
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IInstanceService, InstanceService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();

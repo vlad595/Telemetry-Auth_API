@@ -7,6 +7,7 @@ using Telemetry_Auth_API.DTO;
 using Telemetry_Auth_API.Exceptions;
 using Telemetry_Auth_API.Services;
 using Telemetry_Auth_API.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace Telemetry_Auth_API.Controllers
 {
@@ -114,6 +115,77 @@ namespace Telemetry_Auth_API.Controllers
             }catch(NotAllowedException ex)
             {
                 return BadRequest(ex.Message);
+            }
+        }
+
+        [Tags("Telegram")]
+        [HttpGet("telegram/agent={agentId}")]
+        public async Task<ActionResult<List<UserResponseDTO>>> GetUsersChatIdByAgentId(string agentId)
+        {
+            try
+            {
+                var response = await _service.GetUsersTelegramIdByAgentId(Guid.Parse(agentId));
+                return Ok(response);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [Tags("Telegram")]
+        [HttpGet("telegram/user={userId}")]
+        public async Task<ActionResult<UserResponseDTO>> GetUserTelegramChatId(string userId)
+        {
+            try
+            {
+                var response = await _service.GetUserTelegramChatId(Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [Tags("Telegram")]
+        [HttpPost("telegram")]
+        [Authorize]
+        public async Task<ActionResult<string>> GenerateTelegramCode()
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
+                var response = await _service.MakeTelegramCode(Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [Tags("Telegram")]
+        [HttpPatch("telegram/create-connection")]
+        public async Task<ActionResult<UserResponseDTO>> CreateUserConnection(string code, string chatId)
+        {
+            try
+            {
+                var response = await _service.StoreTelegramChatId(code, chatId);
+                return Ok(response);
+            }catch (NotFoundException ex)
+            {
+               return NotFound(ex.Message); 
+            }
+        }
+        [Tags("Telegram")]
+        [HttpDelete("telegram/delete-connection")]
+        [Authorize]
+        public async Task<ActionResult<UserResponseDTO>> RemoveConnection()
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
+                var response = await _service.RemoveTelegramChatId(Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
         }
     }
