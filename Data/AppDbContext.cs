@@ -29,6 +29,10 @@ namespace Telemetry_Auth_API.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<AlertRules>()
+                .HasIndex(a => a.UserId)
+                .IsUnique();
+
             modelBuilder.Entity<WorkspaceMember>()
                 .HasKey(wm => new { wm.WorkspaceId, wm.UserId });
 

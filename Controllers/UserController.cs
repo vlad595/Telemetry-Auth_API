@@ -16,9 +16,11 @@ namespace Telemetry_Auth_API.Controllers
     public class UserController : Controller
     {
         private readonly IUserService _service;
-        public UserController(IUserService service)
+        private readonly IAlertRulesService _alertRulesService;
+        public UserController(IUserService service, IAlertRulesService alertRulesService)
         {
             _service = service;
+            _alertRulesService = alertRulesService;
         }
         [Authorize]
         [HttpGet("me")]
@@ -120,11 +122,11 @@ namespace Telemetry_Auth_API.Controllers
 
         [Tags("Telegram")]
         [HttpGet("telegram/agent={agentId}")]
-        public async Task<ActionResult<List<UserResponseDTO>>> GetUsersChatIdByAgentId(string agentId)
+        public async Task<ActionResult<InstanceTelegramRecipientsDto>> GetUsersChatIdByAgentId(string agentId)
         {
             try
             {
-                var response = await _service.GetUsersTelegramIdByAgentId(Guid.Parse(agentId));
+                var response = await _alertRulesService.GetUsersTelegramIdByAgentId(Guid.Parse(agentId));
                 return Ok(response);
             }
             catch (NotFoundException ex)
@@ -134,11 +136,11 @@ namespace Telemetry_Auth_API.Controllers
         }
         [Tags("Telegram")]
         [HttpGet("telegram/user={userId}")]
-        public async Task<ActionResult<UserResponseDTO>> GetUserTelegramChatId(string userId)
+        public async Task<ActionResult<AlertRuleResponseDto>> GetUserTelegramChatId(string userId)
         {
             try
             {
-                var response = await _service.GetUserTelegramChatId(Guid.Parse(userId));
+                var response = await _alertRulesService.GetUserTelegramChatId(Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
@@ -153,7 +155,7 @@ namespace Telemetry_Auth_API.Controllers
             try
             {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
-                var response = await _service.MakeTelegramCode(Guid.Parse(userId));
+                var response = await _alertRulesService.MakeTelegramCode(Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {
@@ -162,26 +164,29 @@ namespace Telemetry_Auth_API.Controllers
         }
         [Tags("Telegram")]
         [HttpPatch("telegram/create-connection")]
-        public async Task<ActionResult<UserResponseDTO>> CreateUserConnection(string code, string chatId)
+        public async Task<ActionResult<AlertRuleResponseDto>> CreateUserConnection(string code, string chatId)
         {
             try
             {
-                var response = await _service.StoreTelegramChatId(code, chatId);
+                var response = await _alertRulesService.StoreTelegramChatId(code, chatId);
                 return Ok(response);
             }catch (NotFoundException ex)
             {
                return NotFound(ex.Message); 
+            }catch (ArgumentException ex)
+            {
+               return BadRequest(ex.Message);
             }
         }
         [Tags("Telegram")]
         [HttpDelete("telegram/delete-connection")]
         [Authorize]
-        public async Task<ActionResult<UserResponseDTO>> RemoveConnection()
+        public async Task<ActionResult<AlertRuleResponseDto>> RemoveConnection()
         {
             try
             {
                 string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
-                var response = await _service.RemoveTelegramChatId(Guid.Parse(userId));
+                var response = await _alertRulesService.RemoveTelegramChatId(Guid.Parse(userId));
                 return Ok(response);
             }catch(NotFoundException ex)
             {

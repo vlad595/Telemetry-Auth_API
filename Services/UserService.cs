@@ -27,12 +27,6 @@ namespace Telemetry_Auth_API.Services
 
         public Task<UserResponseDTO> DeleteUser(Guid userId, Guid tokenUserId);
         public Task<UserResponseDTO> RestrictUser(Guid userId);
-
-        public Task<List<UserResponseDTO>> GetUsersTelegramIdByAgentId(Guid agentId);
-        public Task<UserResponseDTO> GetUserTelegramChatId(Guid userId);
-        public Task<string> MakeTelegramCode(Guid userId);
-        public Task<UserResponseDTO> StoreTelegramChatId(string code, string chatId);
-        public Task<UserResponseDTO> RemoveTelegramChatId(Guid userId);
     }
     public class UserService: IUserService
     {
@@ -182,104 +176,6 @@ namespace Telemetry_Auth_API.Services
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)), SecurityAlgorithms.HmacSha256)
             );
             return new JwtSecurityTokenHandler().WriteToken(jwt);
-        }
-
-        public async Task<List<UserResponseDTO>> GetUsersTelegramIdByAgentId(Guid agentId)
-        {
-            var instance = await _context.Instances.Include(i => i.Owner).FirstOrDefaultAsync(i => i.Id == agentId);
-            if (instance == null)
-            {
-                throw new NotFoundException("Agent does not found");
-            }
-
-            if (instance.WorkspaceId == null)
-            {
-                return string.IsNullOrWhiteSpace(instance.Owner.TelegramChatId)
-                    ? []
-                    : [new UserResponseDTO(instance.Owner)];
-            }
-
-            var workspace = await _context.Workspaces
-                .Include(w => w.Owner)
-                .Include(w => w.Members).ThenInclude(m => m.User)
-                .FirstOrDefaultAsync(w => w.Id == instance.WorkspaceId);
-            if (workspace == null)
-            {
-                throw new NotFoundException("Workspace does not found");
-            }
-
-            return workspace.Members.Select(m => m.User)
-                .Append(workspace.Owner)
-                .Where(u => !string.IsNullOrWhiteSpace(u.TelegramChatId))
-                .DistinctBy(u => u.Id)
-                .Select(u => new UserResponseDTO(u))
-                .ToList();
-        }
-        public async Task<UserResponseDTO> GetUserTelegramChatId(Guid userId)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new NotFoundException("User does not found");
-            }
-            if (user.TelegramChatId == null)
-            {
-                throw new NotFoundException("User don`t have connected telegram");
-            }
-            return new UserResponseDTO(user);
-        }
-        public async Task<string> MakeTelegramCode(Guid userId)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new NotFoundException("User does not found");
-            }
-            
-            _cache.TryGetValue($"userId:{user.Id}", out string? code);
-            if (code != null)
-            {
-                return $"https://t.me/Opentelemetrybot?start={code}";
-            }
-            
-            string newCode = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-                .TrimEnd('=').Replace('+', '-').Replace('/', '_');
-            _cache.Set($"userId:{user.Id}", newCode, TimeSpan.FromMinutes(10));
-            _cache.Set(newCode, user.Id, TimeSpan.FromMinutes(10));
-
-            return $"https://t.me/Opentelemetrybot?start={newCode}";
-        }
-        public async Task<UserResponseDTO> StoreTelegramChatId(string code, string chatId)
-        {
-            if (!_cache.TryGetValue(code, out Guid userId))
-            {
-                throw new NotFoundException("Telegram link code is invalid or expired");
-            }
-
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new NotFoundException("User does not found");
-            }
-
-            user.TelegramChatId = chatId;
-            await _context.SaveChangesAsync();
-
-            _cache.Remove(code);
-            _cache.Remove($"userId:{user.Id}");
-
-            return new UserResponseDTO(user);
-        }
-        public async Task<UserResponseDTO> RemoveTelegramChatId(Guid userId)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                throw new NotFoundException("User does not found");
-            }
-            user.TelegramChatId = null;
-            await _context.SaveChangesAsync();
-            return new UserResponseDTO(user);
         }
     }
 }

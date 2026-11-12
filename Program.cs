@@ -57,6 +57,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IInstanceService, InstanceService>();
 builder.Services.AddScoped<IWorkspaceService, WorkspaceService>();
 builder.Services.AddScoped<IInvitesService, InvitesService>();
+builder.Services.AddScoped<IAlertRulesService, AlertRulesService>();
 
 var app = builder.Build();
 
