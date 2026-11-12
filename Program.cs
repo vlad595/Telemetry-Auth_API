@@ -33,7 +33,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 builder.Services.AddControllers();
 builder.Services.AddCors(options => options.AddPolicy("LocalWeb", policy => policy
-    .WithOrigins("http://localhost:4200", "http://127.0.0.1:4200")
+    .WithOrigins("http://localhost:4200", "http://127.0.0.1:4200", "https://telemetry-web-snowy.vercel.app")
     .AllowAnyHeader()
     .AllowAnyMethod()));
 builder.Services.AddDbContext<AppDbContext>();
