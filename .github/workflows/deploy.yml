@@ -1,5 +1,5 @@
 
-name: Deploy Auth API to Azure
+name: Deploy Auth API
 
 on:
   push:
@@ -10,50 +10,23 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-auth-production
+  group: deploy-auth-api
   cancel-in-progress: false
 
 jobs:
   deploy:
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 10
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Build project
-        run: dotnet build --configuration Release
-
-      - name: Configure SSH
-        env:
-          SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
-          HOST_KEY: ${{ secrets.AZURE_HOST_KEY }}
+      - name: Deploy Auth API
+        shell: bash
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "$HOST_KEY" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          set -euo pipefail
 
-      - name: Deploy to Azure
-        env:
-          AZURE_HOST: ${{ secrets.AZURE_HOST }}
-          AZURE_USER: ${{ secrets.AZURE_USER }}
-        run: |
-          ssh -o StrictHostKeyChecking=yes \
-              "$AZURE_USER@$AZURE_HOST" << 'EOF'
-            set -e
+          cd /home/vladggaort/Telemetry/Backend/Telemetry-Auth_API
+          git pull --ff-only
 
-            cd ~/Telemetry/Backend/Telemetry-Auth_API
-            git pull --ff-only
+          cd /home/vladggaort/Telemetry/Backend/Telemetry-API
+          sudo -n docker compose up -d --build --no-deps telemetry-auth-api
 
-            cd ~/Telemetry/Backend/Telemetry-API
-            sudo -n docker compose up -d --build --no-deps telemetry-auth-api
-            sudo -n docker compose ps telemetry-auth-api
-          EOF
+          sudo -n docker compose ps telemetry-auth-api
