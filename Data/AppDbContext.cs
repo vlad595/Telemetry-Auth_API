@@ -12,6 +12,7 @@ namespace Telemetry_Auth_API.Data
         public DbSet<Workspace> Workspaces {get;set;}
         public DbSet<Instance> Instances {get;set;}
         public DbSet<WorkspaceInvite> Invites {get;set;}
+        public DbSet<AlertRules> AlertRules {get;set;}
         public AppDbContext(IConfiguration configuration)
         {
             _config = configuration;
