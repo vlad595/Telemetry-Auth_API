@@ -1,10 +1,13 @@
+
 name: Central Telemetry Deploy
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       service:
-        description: 'Service to deploy'
+        description: "Service to deploy"
         required: true
         type: choice
         options:
@@ -19,34 +22,58 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: telemetry-production-deploy
-  cancel-in-progress: false
-
 jobs:
   deploy:
     runs-on: [self-hosted, Linux, X64]
-    timeout-minutes: 30
+
+    concurrency:
+      group: telemetry-deploy
+      cancel-in-progress: false
+
     steps:
-      - name: Update selected repository and Docker service
+      - name: Deploy selected service
         shell: bash
         env:
-          SERVICE: ${{ inputs.service }}
+          SELECTED_SERVICE: ${{ inputs.service || 'telemetry-auth-api' }}
         run: |
           set -euo pipefail
-          case "$SERVICE" in
-            telemetry-auth-api) REPO="$HOME/Telemetry/Backend/Telemetry-Auth_API" ;;
-            telemetry-api) REPO="$HOME/Telemetry/Backend/Telemetry-API" ;;
-            ingestion-api) REPO="$HOME/Telemetry/Backend/Ingestion-Telemetry_API" ;;
-            analytics-api) REPO="$HOME/Telemetry/Backend/Telemetry-Analytics_API" ;;
-            hub-pusher) REPO="$HOME/Telemetry/Other/TelemetryHubPusherService" ;;
-            telegram-message-service) REPO="$HOME/Telemetry/Other/Telemetry-MessageSender" ;;
-            analytics-service) REPO="$HOME/Telemetry/Other/Telemetry-AnalyticsService" ;;
-            *) echo "Unsupported service: $SERVICE" >&2; exit 1 ;;
+
+          case "$SELECTED_SERVICE" in
+            telemetry-auth-api)
+              REPO_DIR="/home/vladggaort/Telemetry/Backend/Telemetry-Auth_API"
+              ;;
+            telemetry-api)
+              REPO_DIR="/home/vladggaort/Telemetry/Backend/Telemetry-API"
+              ;;
+            ingestion-api)
+              REPO_DIR="/home/vladggaort/Telemetry/Backend/Ingestion-Telemetry_API"
+              ;;
+            analytics-api)
+              REPO_DIR="/home/vladggaort/Telemetry/Backend/Telemetry-Analytics_API"
+              ;;
+            hub-pusher)
+              REPO_DIR="/home/vladggaort/Telemetry/Other/TelemetryHubPusherService"
+              ;;
+            telegram-message-service)
+              REPO_DIR="/home/vladggaort/Telemetry/Other/Telemetry-MessageSender"
+              ;;
+            analytics-service)
+              REPO_DIR="/home/vladggaort/Telemetry/Other/Telemetry-AnalyticsService"
+              ;;
+            *)
+              echo "Unknown service: $SELECTED_SERVICE"
+              exit 1
+              ;;
           esac
-          cd "$REPO"
+
+          echo "Deploying $SELECTED_SERVICE"
+
+          cd "$REPO_DIR"
           git fetch origin main
           git merge --ff-only origin/main
-          cd "$HOME/Telemetry/Backend/Telemetry-API"
-          sudo -n docker compose up -d --build --no-deps "$SERVICE"
-          sudo -n docker compose ps "$SERVICE"
+
+          cd /home/vladggaort/Telemetry/Backend/Telemetry-API
+
+          sudo -n docker compose build "$SELECTED_SERVICE"
+          sudo -n docker compose up -d --no-deps "$SELECTED_SERVICE"
+          sudo -n docker compose ps "$SELECTED_SERVICE"
