@@ -37,8 +37,10 @@ public class AlertRulesService : IAlertRulesService
             .ThenInclude(w => w!.Owner).Include(i => i.Workspace).ThenInclude(w => w!.Members).ThenInclude(m => m.User)
             .FirstOrDefaultAsync(i => i.Id == agentId) ?? throw new NotFoundException("Agent does not found");
 
-        var users = instance.Workspace == null ? new[] { instance.Owner } : instance.Workspace.Members.Select(m => m.User)
-                .Append(instance.Workspace.Owner).DistinctBy(u => u.Id).ToArray();
+        var users = (instance.Workspace == null ? new[] { instance.Owner } : instance.Workspace.Members.Select(m => m.User)
+                .Append(instance.Workspace.Owner).DistinctBy(u => u.Id).ToArray())
+            .Where(u => u.SubscriptionLevel is Subscription.Tier1 or Subscription.Tier2)
+            .ToArray();
         
         var userIds = users.Select(u => u.Id).ToArray();
         
