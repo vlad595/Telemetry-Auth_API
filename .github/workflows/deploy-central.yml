@@ -1,0 +1,52 @@
+name: Central Telemetry Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to deploy'
+        required: true
+        type: choice
+        options:
+          - telemetry-auth-api
+          - telemetry-api
+          - ingestion-api
+          - analytics-api
+          - hub-pusher
+          - telegram-message-service
+          - analytics-service
+
+permissions:
+  contents: read
+
+concurrency:
+  group: telemetry-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 30
+    steps:
+      - name: Update selected repository and Docker service
+        shell: bash
+        env:
+          SERVICE: ${{ inputs.service }}
+        run: |
+          set -euo pipefail
+          case "$SERVICE" in
+            telemetry-auth-api) REPO="$HOME/Telemetry/Backend/Telemetry-Auth_API" ;;
+            telemetry-api) REPO="$HOME/Telemetry/Backend/Telemetry-API" ;;
+            ingestion-api) REPO="$HOME/Telemetry/Backend/Ingestion-Telemetry_API" ;;
+            analytics-api) REPO="$HOME/Telemetry/Backend/Telemetry-Analytics_API" ;;
+            hub-pusher) REPO="$HOME/Telemetry/Other/TelemetryHubPusherService" ;;
+            telegram-message-service) REPO="$HOME/Telemetry/Other/Telemetry-MessageSender" ;;
+            analytics-service) REPO="$HOME/Telemetry/Other/Telemetry-AnalyticsService" ;;
+            *) echo "Unsupported service: $SERVICE" >&2; exit 1 ;;
+          esac
+          cd "$REPO"
+          git fetch origin main
+          git merge --ff-only origin/main
+          cd "$HOME/Telemetry/Backend/Telemetry-API"
+          sudo -n docker compose up -d --build --no-deps "$SERVICE"
+          sudo -n docker compose ps "$SERVICE"
