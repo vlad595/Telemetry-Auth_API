@@ -71,7 +71,7 @@ namespace Telemetry_Auth_API.Services
             {
                 Id = Guid.NewGuid(),
                 UserName = user.UserName,
-                Email = user.Email,
+                Email = user.Email.ToLower(),
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.Password),
                 SubscriptionLevel = Subscription.Tier3,
             };
@@ -85,7 +85,7 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<UserAuthResponseDTO> LogIn(UserLogInDTO user)
         {
-            var findedUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            var findedUser = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == user.Email.ToLower());
 
             if (findedUser == null)
             {
