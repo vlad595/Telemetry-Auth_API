@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Frozen;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.Internal;
 using Telemetry_Auth_API.Data;
 using Telemetry_Auth_API.DTO;
 using Telemetry_Auth_API.Exceptions;
@@ -12,7 +13,13 @@ namespace Telemetry_Auth_API.Services
     {
         public Task<InstanceResponseDto> AddInstance(InstanceCreationDto instance, Guid userId);
         public Task<InstanceResponseDto> AddInstanceToWorkspace(WorkspaceInstanceCreationDto instance, Guid userId);
+
+        public Task<InstanceResponseDto> TransferInstanceBetweenWorkspaces(Guid instanceId, Guid toWorkspace, Guid fromWorkspace, Guid userId);
+        public Task<InstanceResponseDto> TransferInstanceBetweenOwners(Guid instanceId, Guid toNewOwner, Guid currentOwner);
+        public Task<InstanceResponseDto> TransferInstanceFromOwnerToWorkspace(Guid instanceId, Guid workspaceId, Guid ownerId);
+
         public Task<InstanceResponseDto> RemoveInstance(Guid instanceId, Guid userId);
+        
         public Task<List<InstanceResponseDto>> GetWorkspaceInstances(Guid workspaceId, Guid userId);
         public Task<List<InstanceResponseDto>> GetMyInstances(Guid userId);
     }
@@ -119,6 +126,78 @@ namespace Telemetry_Auth_API.Services
                 result.Add(new InstanceResponseDto(instance));
             }
             return result;
+        }
+
+        public async Task<InstanceResponseDto> TransferInstanceBetweenWorkspaces(Guid instanceId, Guid toWorkspace, Guid fromWorkspace, Guid userId)
+        {
+            var instance = await _context.Instances.FirstOrDefaultAsync(i => i.Id == instanceId);
+            if (instance == null)
+            {
+                throw new NotFoundException("Instance does not found");
+            }
+
+            var workspace = await _context.Workspaces.AsNoTracking().Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == toWorkspace);
+            if (workspace == null)
+            {
+                throw new NotFoundException("Worksapce does not found");
+            }
+
+            var member = workspace.Members.FirstOrDefault(m => m.UserId == userId);
+            if (workspace.OwnerId != userId && (member == null || member.UserRole <= WorkspaceRole.Reader))
+            {
+                throw new NotAllowedException("You are not allowed to do this action");
+            }
+
+            instance.WorkspaceId = toWorkspace;
+            await _context.SaveChangesAsync();
+            return new InstanceResponseDto(instance);
+        }
+        public async Task<InstanceResponseDto> TransferInstanceBetweenOwners(Guid instanceId, Guid toNewOwner, Guid currentOwner)
+        {
+            var instance = await _context.Instances.FirstOrDefaultAsync(i => i.Id == instanceId);
+            if (instance == null)
+            {
+                throw new NotFoundException("Instance does not found");
+            }
+            if (instance.OwnerId != currentOwner)
+            {
+                throw new NotAllowedException("You are not the owner of thit instance");
+            }
+
+            instance.OwnerId = toNewOwner;
+            await _context.SaveChangesAsync();
+            return new InstanceResponseDto(instance);
+        }
+        public async Task<InstanceResponseDto> TransferInstanceFromOwnerToWorkspace(Guid instanceId, Guid workspaceId, Guid ownerId)
+        {
+            var instance = await _context.Instances.FirstOrDefaultAsync(i => i.Id == instanceId);
+            if (instance == null)
+            {
+                throw new NotFoundException("Instance does not found");
+            }
+            if (instance.OwnerId != ownerId)
+            {
+                throw new NotAllowedException("You are not the owner of thit instance");
+            }
+
+            var workspace = await _context.Workspaces.AsNoTracking().Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == workspaceId);
+            if (workspace == null)
+            {
+                throw new NotFoundException("Worksapce does not found");
+            }
+            var member = workspace.Members.FirstOrDefault(m => m.UserId == ownerId);
+            if (workspace.OwnerId != ownerId && (member == null || member.UserRole <= WorkspaceRole.Reader))
+            {
+                throw new NotAllowedException("You are not allowed to do this action");
+            }
+            if (!string.IsNullOrWhiteSpace(instance.WorkspaceId.ToString()))
+            {
+                throw new NotAllowedException("Instance already in other workspace. Try transfer instance between workspaces");
+            }
+
+            instance.WorkspaceId = workspaceId;
+            await _context.SaveChangesAsync();
+            return new InstanceResponseDto(instance);
         }
     }
 }

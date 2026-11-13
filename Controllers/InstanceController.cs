@@ -98,5 +98,53 @@ namespace Telemetry_Auth_API.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpPatch("{instanceId}/transfer/toNewOwner={newOwnerId}")]
+        public async Task<ActionResult<InstanceResponseDto>> TransferFromOwnerToNewOwner(string instanceId, string newOwnerId)
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
+                var response = await _service.TransferInstanceBetweenOwners(Guid.Parse(instanceId), Guid.Parse(newOwnerId), Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }catch(NotAllowedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [HttpPatch("{instanceId}/transfer/toWorkspacer={newWorkspaceId}")]
+        public async Task<ActionResult<InstanceResponseDto>> TransferFromOwnerToWorksapce(string instanceId, string newWorkspaceId)
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
+                var response = await _service.TransferInstanceFromOwnerToWorkspace(Guid.Parse(instanceId), Guid.Parse(newWorkspaceId), Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }catch(NotAllowedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [HttpPatch("{instanceId}/transfer_from={currentWorkspaceId}/toNewWorkspaceId={newWorkspaceId}")]
+        public async Task<ActionResult<InstanceResponseDto>> TransferFromOwnerToNewOwner(string instanceId, string currentWorkspaceId, string newWorkspaceId)
+        {
+            try
+            {
+                string userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new NotFoundException("User id does not found");
+                var response = await _service.TransferInstanceBetweenWorkspaces(Guid.Parse(instanceId), Guid.Parse(newWorkspaceId), Guid.Parse(currentWorkspaceId), Guid.Parse(userId));
+                return Ok(response);
+            }catch(NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }catch(NotAllowedException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
     }
 }
