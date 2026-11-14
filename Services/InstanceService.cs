@@ -136,6 +136,11 @@ namespace Telemetry_Auth_API.Services
                 throw new NotFoundException("Instance does not found");
             }
 
+            if (instance.WorkspaceId != fromWorkspace || instance.OwnerId != userId || fromWorkspace == toWorkspace)
+            {
+                throw new NotAllowedException("You cannot transfer this instance from the specified workspace");
+            }
+
             var workspace = await _context.Workspaces.AsNoTracking().Include(w => w.Members).FirstOrDefaultAsync(w => w.Id == toWorkspace);
             if (workspace == null)
             {
@@ -143,7 +148,7 @@ namespace Telemetry_Auth_API.Services
             }
 
             var member = workspace.Members.FirstOrDefault(m => m.UserId == userId);
-            if (workspace.OwnerId != userId && (member == null || member.UserRole <= WorkspaceRole.Reader))
+            if (workspace.OwnerId != userId && (member == null || member.UserRole >= WorkspaceRole.Reader))
             {
                 throw new NotAllowedException("You are not allowed to do this action");
             }
@@ -162,6 +167,11 @@ namespace Telemetry_Auth_API.Services
             if (instance.OwnerId != currentOwner)
             {
                 throw new NotAllowedException("You are not the owner of thit instance");
+            }
+
+            if (!await _context.Users.AnyAsync(user => user.Id == toNewOwner))
+            {
+                throw new NotFoundException("New owner does not found");
             }
 
             instance.OwnerId = toNewOwner;
@@ -186,11 +196,11 @@ namespace Telemetry_Auth_API.Services
                 throw new NotFoundException("Worksapce does not found");
             }
             var member = workspace.Members.FirstOrDefault(m => m.UserId == ownerId);
-            if (workspace.OwnerId != ownerId && (member == null || member.UserRole <= WorkspaceRole.Reader))
+            if (workspace.OwnerId != ownerId && (member == null || member.UserRole >= WorkspaceRole.Reader))
             {
                 throw new NotAllowedException("You are not allowed to do this action");
             }
-            if (!string.IsNullOrWhiteSpace(instance.WorkspaceId.ToString()))
+            if (instance.WorkspaceId.HasValue)
             {
                 throw new NotAllowedException("Instance already in other workspace. Try transfer instance between workspaces");
             }

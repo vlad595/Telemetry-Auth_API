@@ -111,7 +111,7 @@ namespace Telemetry_Auth_API.Controllers
                 return NotFound(ex.Message);
             }catch(NotAllowedException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
         [HttpPatch("{instanceId}/transfer/toWorkspacer={newWorkspaceId}")]
@@ -127,7 +127,7 @@ namespace Telemetry_Auth_API.Controllers
                 return NotFound(ex.Message);
             }catch(NotAllowedException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
         [HttpPatch("{instanceId}/transfer_from={currentWorkspaceId}/toNewWorkspaceId={newWorkspaceId}")]
@@ -143,7 +143,7 @@ namespace Telemetry_Auth_API.Controllers
                 return NotFound(ex.Message);
             }catch(NotAllowedException ex)
             {
-                return NotFound(ex.Message);
+                return BadRequest(ex.Message);
             }
         }
     }

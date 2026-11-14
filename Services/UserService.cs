@@ -129,19 +129,37 @@ namespace Telemetry_Auth_API.Services
         }
         public async Task<UserResponseDTO> DeleteUser(Guid userId, Guid tokenUserId)
         {
-            var user = await FindUserById(userId);
-
-            if (user == null)
+            if (userId != tokenUserId)
             {
-                throw new NotFoundException();
+                throw new NotAllowedException("You cannot delete another account.");
             }
-            if (user.Id != tokenUserId)
+
+            var user = await FindUserById(userId);
+            var ownedWorkspaceIds = await _context.Workspaces
+                .Where(workspace => workspace.OwnerId == userId)
+                .Select(workspace => workspace.Id)
+                .ToListAsync();
+
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            await _context.Instances
+                .Where(instance => instance.OwnerId == userId)
+                .ExecuteDeleteAsync();
+
+            if (ownedWorkspaceIds.Count > 0)
             {
-                throw new NotAllowedException("You cannot delete someone`s account.");
+                await _context.Instances
+                    .Where(instance => instance.WorkspaceId.HasValue && ownedWorkspaceIds.Contains(instance.WorkspaceId.Value))
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(instance => instance.WorkspaceId, (Guid?)null));
+
+                await _context.Workspaces
+                    .Where(workspace => workspace.OwnerId == userId)
+                    .ExecuteDeleteAsync();
             }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             return new UserResponseDTO(user);
         }
         public async Task<UserResponseDTO> RestrictUser(Guid userId)
